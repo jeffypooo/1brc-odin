@@ -21,6 +21,8 @@ Calc_Result :: struct {
     avg_temp: f32,
 }
 
+
+
 main :: proc() {
     if len(os.args) != 2 {
         fmt.println("Usage: 1br <data_file>")
@@ -43,30 +45,10 @@ main :: proc() {
     log_time("read file", stopwatch)
     fmt.println("file read successfully, size:", len(bytes))
 
-    // fmt.println("generating temp lookup table")
-
-    time.stopwatch_reset(&stopwatch)
-    time.stopwatch_start(&stopwatch)
-
-    // generate a map[string]f32 lookup table for the temperatures
-    // the temp range is -99.9 to 99.9 with increments of 0.1
-
-    // temp_lookup := map[string]f32{}
-    // f_val: f32 = -99.9
-    // for f_val <= 99.9 {
-    //     temp_lookup[fmt.tprintf("%.1f", f_val)] = f_val
-    //     f_val += 0.1
-    // }
-
-    // log_time("generate temp lookup table", stopwatch)
-    // fmt.println("temp lookup table generated")
-
-    // time.stopwatch_reset(&stopwatch)
-    // time.stopwatch_start(&stopwatch)
 
     results := chunk_and_process(bytes, num_procs)
     // results := calculate_stats(bytes)
-    log_time("process", stopwatch)
+    log_time("total", stopwatch)
     fmt.println("completed calculations")
 
     // output the results to results.txt
@@ -176,6 +158,8 @@ calculate_stats :: proc(bytes: []byte) -> map[string]Calc_Result {
         }
         if char == '\n' {
             temp = string(bytes[temp_beg:index])
+            // somehow looking up the temp in the lookup table is slower than parsing the string
+            // temp_f32, f_ok := temp_lookup[temp]
             temp_f32, f_ok := strconv.parse_f32(temp)
             if !f_ok {
                 fmt.println("Error parsing temp:", temp)
