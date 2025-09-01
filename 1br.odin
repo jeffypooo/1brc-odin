@@ -131,7 +131,7 @@ run_1br :: proc(bytes: []byte, num_jobs: int) {
 	// fmt.println("writing to file duration:", time.stopwatch_duration(sw))
 }
 
-calculate_stats :: proc(bytes: []byte) -> map[string]Calc_Result {
+calculate_stats :: proc(bytes: []byte) -> map[string]Calc_Result #no_bounds_check {
 	// parse line by line
 	// each line has the format:
 	// <station-name>;<temp>
@@ -172,7 +172,7 @@ calculate_stats :: proc(bytes: []byte) -> map[string]Calc_Result {
 	return results
 }
 
-parse_temp :: proc(temp_bytes: []byte) -> (f32, bool) {
+parse_temp :: proc(temp_bytes: []byte) -> (f32, bool) #no_bounds_check {
 	if len(temp_bytes) == 0 {
 		return 0, false
 	}
@@ -214,7 +214,7 @@ parse_temp :: proc(temp_bytes: []byte) -> (f32, bool) {
 	return sign * res, true
 }
 
-chunk_and_process :: proc(bytes: []byte, num_jobs: int) -> map[string]Calc_Result {
+chunk_and_process :: proc(bytes: []byte, num_jobs: int) -> map[string]Calc_Result #no_bounds_check {
 	// sw := time.Stopwatch{}
 	// time.stopwatch_start(&sw)
 
