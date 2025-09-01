@@ -146,7 +146,6 @@ calculate_stats :: proc(bytes: []byte) -> map[string]Calc_Result {
     // <station-name>;<temp>
     // we want to calculate the min, max, and avg temp for each station
     station := ""
-    temp := ""
     station_beg := 0
     temp_beg := 0
     results := map[string]Calc_Result{}
@@ -157,12 +156,9 @@ calculate_stats :: proc(bytes: []byte) -> map[string]Calc_Result {
             continue
         }
         if char == '\n' {
-            temp = string(bytes[temp_beg:index])
-            // somehow looking up the temp in the lookup table is slower than parsing the string
-            // temp_f32, f_ok := temp_lookup[temp]
-            temp_f32, f_ok := strconv.parse_f32(temp)
+            temp_f32, f_ok := parse_temp(bytes[temp_beg:index])
             if !f_ok {
-                fmt.println("Error parsing temp:", temp)
+                fmt.println("Error parsing temp:", string(bytes[temp_beg:index]))
                 continue
             }
             station_data, s_ok := results[station]
@@ -175,12 +171,53 @@ calculate_stats :: proc(bytes: []byte) -> map[string]Calc_Result {
             }
             results[station] = station_data
             station = ""
-            temp = ""
             station_beg = index + 1
             continue
         }
     }
     return results
+}
+
+parse_temp :: proc(temp_bytes: []byte) -> (f32, bool) {
+    if len(temp_bytes) == 0 {
+        return 0, false
+    }
+    i := 0
+    sign := f32(1)
+    if temp_bytes[0] == '-' {
+        sign = -1
+        i = 1
+    }
+
+    whole_part := 0
+    decimal_part := 0
+
+    // parse the whole part base 10, using ascii math
+    for i < len(temp_bytes) && temp_bytes[i] != '.' {
+        if temp_bytes[i] < '0' || temp_bytes[i] > '9' {
+            return 0, false
+        }
+        whole_part = whole_part * 10 + int(temp_bytes[i] - '0')
+        i += 1
+    }
+
+    // skip the decimal point
+    if i >= len(temp_bytes) || temp_bytes[i] != '.' {
+        return 0, false
+    }
+    i += 1
+    // parse the decimal part (one digit)
+    if i >= len(temp_bytes) || temp_bytes[i] < '0' || temp_bytes[i] > '9' {
+        return 0, false
+    }
+    decimal_part = int(temp_bytes[i] - '0')
+    i += 1
+
+    if i != len(temp_bytes) {
+        return 0, false
+    }
+    res := f32(whole_part) + f32(decimal_part) * 0.1
+    return sign * res, true
 }
 
 log_time :: proc(tag: string, stopwatch: time.Stopwatch) {
